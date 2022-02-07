@@ -13,6 +13,10 @@ impl<C : From<u8>> RGB<C> {
               g : C::from(0u8),
               b : C::from(0u8) }
     }
+
+    pub fn new(r : C, g : C, b : C) -> Self {
+        Self{ r, g, b }
+    }
 }
 
 pub type RGBu8 = RGB<u8>;

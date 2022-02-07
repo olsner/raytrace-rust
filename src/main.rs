@@ -25,11 +25,43 @@ impl From<Vec3> for RGBf32 {
     }
 }
 
+struct Sphere {
+    center : Point3<f32>,
+    radius : f32,
+}
+
+impl Sphere {
+    fn new(center : Point3<f32>, radius : f32) -> Sphere {
+        Sphere{ center, radius }
+    }
+}
+
+trait Shape {
+    fn hit(self : Self, ray : &Ray) -> bool;
+}
+
+impl Shape for Sphere {
+    fn hit(self, r : &Ray) -> bool {
+        let oc = r.origin - self.center;
+        let a = r.direction.norm_squared();
+        let b = 2.0 * oc.dot(&r.direction);
+        let c = oc.norm_squared() - self.radius * self.radius;
+        let discriminant = b*b - 4.0*a*c;
+        discriminant > 0.0
+    }
+}
+
 fn ray_color(ray : &Ray) -> RGBf32 {
-    let unit_direction = ray.direction;
-    let t = 0.5 * (unit_direction.y + 1.0);
     let white = Vec3::new(1.0, 1.0, 1.0);
     let blue = Vec3::new(0.5, 0.7, 1.0);
+    let red = RGBf32::new(1.0, 0.0, 0.0);
+
+    if Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5).hit(ray) {
+        return red;
+    }
+
+    let unit_direction = ray.direction;
+    let t = 0.5 * (unit_direction.y + 1.0);
     RGBf32::from(white.lerp(&blue, t))
 }
 
@@ -67,7 +99,7 @@ fn main() {
     for y in (0..height).rev() {
         for x in 0..width {
             let u = x as f32 / (width - 1) as f32;
-            let v = y as f32 / (width - 1) as f32;
+            let v = y as f32 / (height - 1) as f32;
 
             let direction = UVec3::new_normalize(lower_left_corner + u*horizontal + v*vertical - origin);
             let r = Ray { origin, direction };
