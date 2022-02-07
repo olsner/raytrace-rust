@@ -1,3 +1,5 @@
+#![feature(test)]
+
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -31,6 +33,8 @@ impl From<Vec3> for RGBf32 {
     }
 }
 
+#[derive(Clone)]
+#[derive(Copy)]
 struct Sphere {
     center : Point3<f32>,
     radius : f32,
@@ -120,4 +124,32 @@ fn main() {
     }
 
     write_ppm(Path::new("frame.ppm"), &fbuf);
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate test;
+    use test::Bencher;
+    use crate::*;
+
+    #[bench]
+    fn sphere_ray_hit(b: &mut Bencher) {
+        let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+        let origin = Point3::new(0.0, 0.0, 0.0);
+        let direction = UVec3::new_normalize(
+            Vec3::new(-0.016251257, 0.4996877, -0.86605316));
+        let ray = Ray { origin, direction };
+
+        b.iter(|| sphere.hit(&ray));
+    }
+
+    #[bench]
+    fn bench_ray_color(b: &mut Bencher) {
+        let origin = Point3::new(0.0, 0.0, 0.0);
+        let direction = UVec3::new_normalize(
+            Vec3::new(-0.016251257, 0.4996877, -0.86605316));
+        let ray = Ray { origin, direction };
+
+        b.iter(|| ray_color(&ray));
+    }
 }
