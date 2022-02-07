@@ -20,9 +20,9 @@ pub type RGBf32 = RGB<f32>;
 
 impl From<RGBf32> for RGBu8 {
     fn from(f : RGBf32) -> RGBu8 {
-        RGBu8 { r : f.r as u8,
-                g : f.g as u8,
-                b : f.b as u8 }
+        RGBu8 { r : (255.0 * f.r).round() as u8,
+                g : (255.0 * f.g).round() as u8,
+                b : (255.0 * f.b).round() as u8 }
     }
 }
 

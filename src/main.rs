@@ -5,8 +5,8 @@ use std::path::Path;
 mod rgb;
 mod framebuf;
 
-use rgb::RGB;
 use rgb::RGBu8;
+use rgb::RGBf32;
 use framebuf::Framebuf;
 
 fn write_ppm<Pixel>(path : &Path, buf : &Framebuf<Pixel>)
@@ -33,14 +33,15 @@ fn main() {
             let g = y as f32 / (width - 1) as f32;
             let b = 0.25f32;
 
-//            let ir = (255.0 * r).round() as u8;
-//            let ig = (255.0 * g).round() as u8;
-//            let ib = (255.0 * b).round() as u8;
+            let ir = (255.0 * r).round() as u8;
+            let ig = (255.0 * g).round() as u8;
+            let ib = (255.0 * b).round() as u8;
 
-            buf[(x, y)] = RGBf32{ r : r, g : g, b : b };
+            buf[(x, y)] = RGBu8{ r : ir, g : ig, b : ib };
+            fbuf[(x, y)] = RGBf32{ r : r, g : g, b : b };
         }
     }
 
-    let path = Path::new("frame2.ppm");
-    write_ppm(path, &buf);
+    write_ppm(Path::new("frame_u8.ppm"), &buf);
+    write_ppm(Path::new("frame_f32.ppm"), &fbuf);
 }
