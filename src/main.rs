@@ -19,6 +19,12 @@ struct Ray {
     direction : UVec3,
 }
 
+impl Ray {
+    fn at(self : &Self, t : f32) -> Point3<f32> {
+        self.origin + (t * self.direction.into_inner())
+    }
+}
+
 impl From<Vec3> for RGBf32 {
     fn from(vec : Vec3) -> RGBf32 {
         RGBf32{ r : vec.x, g : vec.y, b : vec.z }
@@ -37,27 +43,33 @@ impl Sphere {
 }
 
 trait Shape {
-    fn hit(self : Self, ray : &Ray) -> bool;
+    fn hit(self : &Self, ray : &Ray) -> f32;
 }
 
 impl Shape for Sphere {
-    fn hit(self, r : &Ray) -> bool {
+    fn hit(self : &Sphere, r : &Ray) -> f32 {
         let oc = r.origin - self.center;
         let a = r.direction.norm_squared();
-        let b = 2.0 * oc.dot(&r.direction);
+        let hb = oc.dot(&r.direction);
         let c = oc.norm_squared() - self.radius * self.radius;
-        let discriminant = b*b - 4.0*a*c;
-        discriminant > 0.0
+        let discriminant = hb * hb - a * c;
+        if discriminant < 0.0 {
+            -1.0
+        } else {
+            (-hb - discriminant.sqrt()) / a
+        }
     }
 }
 
 fn ray_color(ray : &Ray) -> RGBf32 {
     let white = Vec3::new(1.0, 1.0, 1.0);
     let blue = Vec3::new(0.5, 0.7, 1.0);
-    let red = RGBf32::new(1.0, 0.0, 0.0);
 
-    if Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5).hit(ray) {
-        return red;
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+    let dist = sphere.hit(ray);
+    if dist >= 0. {
+        let n = (ray.at(dist) - sphere.center).normalize();
+        return RGBf32::from(0.5 * (n + Vec3::repeat(1.0)));
     }
 
     let unit_direction = ray.direction;
