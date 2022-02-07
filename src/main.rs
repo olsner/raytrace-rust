@@ -9,6 +9,30 @@ use rgb::RGBu8;
 use rgb::RGBf32;
 use framebuf::Framebuf;
 
+extern crate nalgebra as na;
+use na::{UnitVector3, Vector3, Point3};
+type Vec3 = Vector3<f32>;
+type UVec3 = UnitVector3<f32>;
+
+struct Ray {
+    origin : Point3<f32>,
+    direction : UVec3,
+}
+
+impl From<Vec3> for RGBf32 {
+    fn from(vec : Vec3) -> RGBf32 {
+        RGBf32{ r : vec.x, g : vec.y, b : vec.z }
+    }
+}
+
+fn ray_color(ray : &Ray) -> RGBf32 {
+    let unit_direction = ray.direction;
+    let t = 0.5 * (unit_direction.y + 1.0);
+    let white = Vec3::new(1.0, 1.0, 1.0);
+    let blue = Vec3::new(0.5, 0.7, 1.0);
+    RGBf32::from(white.lerp(&blue, t))
+}
+
 fn write_ppm<Pixel>(path : &Path, buf : &Framebuf<Pixel>)
   where RGBu8 : From<Pixel>, Pixel : Copy {
     let mut file = File::create(&path).unwrap();
@@ -24,24 +48,32 @@ fn write_ppm<Pixel>(path : &Path, buf : &Framebuf<Pixel>)
 fn main() {
     let width = 1280;
     let height = 800;
-    let mut buf = Framebuf::new(width, height, RGBu8::default());
     let mut fbuf = Framebuf::new(width, height, RGBf32::default());
+
+    let aspect_ratio = width as f32 / height as f32;
+
+    // Camera
+
+    let viewport_height = 2.0;
+    let viewport_width = aspect_ratio * viewport_height;
+    let focal_length = 1.0;
+
+    let origin = Point3::new(0., 0., 0.);
+    let horizontal = Vec3::new(viewport_width, 0., 0.);
+    let vertical = Vec3::new(0., viewport_height, 0.);
+    let lower_left_corner = origin - horizontal / 2. - vertical / 2. -
+        Vec3::new(0., 0., focal_length);
 
     for y in (0..height).rev() {
         for x in 0..width {
-            let r = x as f32 / (width - 1) as f32;
-            let g = y as f32 / (width - 1) as f32;
-            let b = 0.25f32;
+            let u = x as f32 / (width - 1) as f32;
+            let v = y as f32 / (width - 1) as f32;
 
-            let ir = (255.0 * r).round() as u8;
-            let ig = (255.0 * g).round() as u8;
-            let ib = (255.0 * b).round() as u8;
-
-            buf[(x, y)] = RGBu8{ r : ir, g : ig, b : ib };
-            fbuf[(x, y)] = RGBf32{ r : r, g : g, b : b };
+            let direction = UVec3::new_normalize(lower_left_corner + u*horizontal + v*vertical - origin);
+            let r = Ray { origin, direction };
+            fbuf[(x, y)] = ray_color(&r);
         }
     }
 
-    write_ppm(Path::new("frame_u8.ppm"), &buf);
-    write_ppm(Path::new("frame_f32.ppm"), &fbuf);
+    write_ppm(Path::new("frame.ppm"), &fbuf);
 }
