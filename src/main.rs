@@ -1,6 +1,7 @@
 #![feature(test)]
 
 use std::fs::File;
+use std::io::BufWriter;
 use std::io::Write;
 use std::path::Path;
 
@@ -46,7 +47,7 @@ fn ray_color(world : &impl Shape, ray : &Ray) -> RGBf32 {
 fn write_ppm<Pixel>(path : &Path, buf : &Framebuf<Pixel>)
   where RGBu8 : From<Pixel>, Pixel : Copy {
     print!("Writing {}\n", path.display());
-    let mut file = File::create(&path).unwrap();
+    let mut file = BufWriter::new(File::create(&path).unwrap());
     write!(&mut file, "P3\n{} {}\n255\n", buf.width, buf.height).unwrap();
     for y in (0..buf.height).rev() {
         for x in 0..buf.width {
