@@ -4,113 +4,25 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-mod rgb;
 mod framebuf;
+mod ray;
+mod rgb;
+mod scene;
 
+use framebuf::Framebuf;
+use ray::*;
 use rgb::RGBu8;
 use rgb::RGBf32;
-use framebuf::Framebuf;
+use scene::*;
 
 extern crate nalgebra as na;
 use na::{UnitVector3, Vector3, Point3};
 type Vec3 = Vector3<f32>;
 type UVec3 = UnitVector3<f32>;
 
-struct Ray {
-    origin : Point3<f32>,
-    direction : UVec3,
-}
-
-impl Ray {
-    fn at(self : &Self, t : f32) -> Point3<f32> {
-        self.origin + (t * self.direction.into_inner())
-    }
-}
-
 impl From<Vec3> for RGBf32 {
     fn from(vec : Vec3) -> RGBf32 {
         RGBf32{ r : vec.x, g : vec.y, b : vec.z }
-    }
-}
-
-#[derive(Clone)]
-#[derive(Copy)]
-struct Sphere {
-    center : Point3<f32>,
-    radius : f32,
-}
-
-impl Sphere {
-    fn new(center : Point3<f32>, radius : f32) -> Sphere {
-        Sphere{ center, radius }
-    }
-}
-
-struct HitRecord {
-    point : Point3<f32>,
-    normal : UVec3,
-    distance : f32,
-}
-
-trait Shape {
-    fn hit(self : &Self, ray : &Ray) -> Option<HitRecord>;
-}
-
-impl Shape for Sphere {
-    fn hit(self : &Sphere, r : &Ray) -> Option<HitRecord> {
-        let oc = r.origin - self.center;
-        let a = r.direction.norm_squared();
-        let hb = oc.dot(&r.direction);
-        let c = oc.norm_squared() - self.radius * self.radius;
-        let discriminant = hb * hb - a * c;
-        if discriminant < 0.0 {
-            return None;
-        }
-
-        let distance = (-hb - discriminant.sqrt()) / a;
-        let point = r.at(distance);
-        let normal = UVec3::new_normalize(point - self.center);
-        if distance >= 0.0 {
-            Some(HitRecord{ point, normal, distance })
-        }
-        else {
-            None
-        }
-    }
-}
-
-fn best(left : Option<HitRecord>, right : Option<HitRecord>) -> Option<HitRecord> {
-    match left {
-        None => right,
-        Some(lhit) => Some(match right {
-            Some(rhit) =>
-                if lhit.distance < rhit.distance { lhit } else { rhit }
-            None => lhit,
-        })
-    }
-}
-
-struct Scene {
-    spheres : Vec<Sphere>,
-}
-
-impl Scene {
-    fn new() -> Self {
-        Scene { spheres : Vec::new() }
-    }
-
-    fn add(self : &mut Self, sphere : Sphere) {
-        self.spheres.push(sphere);
-    }
-}
-
-impl Shape for Scene {
-    fn hit(self : &Scene, r : &Ray) -> Option<HitRecord> {
-        let mut best_hit = None;
-        for sphere in &self.spheres {
-            best_hit = best(sphere.hit(r), best_hit);
-        }
-        return best_hit;
     }
 }
 
