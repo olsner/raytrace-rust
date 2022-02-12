@@ -74,9 +74,13 @@ fn main() {
 
     let mat_ground = SomeMaterial::lambertian(Vec3::new(0.8, 0.8, 0.0));
     let mat_center = SomeMaterial::lambertian(Vec3::new(0.7, 0.3, 0.3));
+    let mat_left = SomeMaterial::metal(Vec3::new(0.8, 0.8, 0.8));
+    let mat_right = SomeMaterial::metal(Vec3::new(0.8, 0.6, 0.2));
     let mut world = Scene::new();
     world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.), mat_ground);
     world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5), mat_center);
+    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5), mat_left);
+    world.add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5), mat_right);
 
     let samples = 100;
     let sample_weight = 1. / (samples as f32);
