@@ -50,30 +50,6 @@ fn random_unit_vector(rng : &mut impl Rng) -> UVec3 {
     UVec3::new_normalize(random_in_unit_sphere(rng))
 }
 
-fn ray_color(world : &impl Shape, ray : &Ray, rng : &mut impl Rng, depth : i32) -> RGBf32 {
-    let white = Vec3::new(1.0, 1.0, 1.0);
-    let blue = Vec3::new(0.5, 0.7, 1.0);
-
-    if depth == 0 {
-        return RGBf32::black();
-    }
-
-    match world.hit(ray) {
-        Some(hit) => {
-            let n = hit.normal.into_inner();
-            let bounce_dir = n + random_unit_vector(rng).into_inner();
-            // return RGBf32::from(0.5 * (n + Vec3::repeat(1.0)));
-            let new_ray = Ray::new_normalize(hit.point, bounce_dir);
-            return ray_color(world, &new_ray, rng, depth - 1) * 0.5;
-        }
-        None => ()
-    }
-
-    let unit_direction = ray.direction;
-    let t = 0.5 * (unit_direction.y + 1.0);
-    RGBf32::from(white.lerp(&blue, t))
-}
-
 fn write_ppm<Pixel>(path : &Path, buf : &Framebuf<Pixel>)
   where RGBu8 : From<Pixel>, Pixel : Copy {
     let mut file = BufWriter::new(File::create(&path).unwrap());
@@ -95,9 +71,11 @@ fn main() {
 
     let camera = Camera::new(width, height);
 
+    let mat_ground = SomeMaterial::lambertian(Vec3::new(0.8, 0.8, 0.0));
+    let mat_center = SomeMaterial::lambertian(Vec3::new(0.7, 0.3, 0.3));
     let mut world = Scene::new();
-    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5));
-    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.));
+    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.), mat_ground);
+    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5), mat_center);
 
     let samples = 100;
     let sample_weight = 1. / (samples as f32);
@@ -111,7 +89,7 @@ fn main() {
                 let u = (x as f32) + rand_f32(&mut rng);
                 let v = (y as f32) + rand_f32(&mut rng);
                 let r = camera.cast(u, v);
-                sum += ray_color(&world, &r, &mut rng, max_depth);
+                sum += RGBf32::from(world.ray_color(&r, &mut rng, max_depth));
             }
             fbuf[(x, y)] = (sum * sample_weight).gamma_correct();
         }
