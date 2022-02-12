@@ -37,9 +37,11 @@ impl Shape for Sphere {
 
         let distance = (-hb - discriminant.sqrt()) / a;
         let point = r.at(distance);
-        let normal = UVec3::new_normalize(point - self.center);
+        let outward_normal = UVec3::new_normalize(point - self.center);
+        let front_face = outward_normal.dot(&r.direction) < 0.;
+        let normal = if front_face { outward_normal } else { -outward_normal };
         if distance >= 0.0 {
-            Some(HitRecord{ point, normal, distance })
+            Some(HitRecord{ point, normal, distance, front_face })
         }
         else {
             None

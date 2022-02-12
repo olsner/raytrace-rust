@@ -1,8 +1,10 @@
 use crate::Vec3;
+use crate::UVec3;
 
 use crate::Rng;
 use crate::random_unit_vector;
 use crate::random_in_unit_sphere;
+use crate::rand_f32;
 
 use crate::ray::*;
 
@@ -25,13 +27,13 @@ pub struct Metal {
     fuzziness : f32,
 }
 
-fn reflect(v : Vec3, n : Vec3) -> Vec3 {
-    return v - 2.0 * v.dot(&n) * n;
+fn reflect(v : UVec3, n : UVec3) -> Vec3 {
+    return v.into_inner() - 2.0 * v.dot(&n) * n.into_inner();
 }
 
 impl Material for Metal {
     fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
-        let reflected = reflect(ray.direction.into_inner(), hit.normal.into_inner());
+        let reflected = reflect(ray.direction, hit.normal);
         let fuzzed = reflected + self.fuzziness * random_in_unit_sphere(rng);
         let keep = fuzzed.dot(&hit.normal) > 0.;
         let attenuation = if keep { self.albedo } else { Vec3::default() };
@@ -43,20 +45,32 @@ pub struct Dielectric {
     ir : f32
 }
 
-fn refract(uv : Vec3, n : Vec3, ratio : f32) -> Vec3 {
-    let cos_theta = (-uv).dot(&n).min(1.0) * ratio;
-    let r_out_perp = ratio * uv + cos_theta * n;
-    let r_out_para = -(1.0 - r_out_perp.norm_squared()).sqrt() * n;
+fn refract(uv : UVec3, n : UVec3, cos_theta : f32, ratio : f32) -> Vec3 {
+    let r_out_perp = ratio * uv.into_inner() + (ratio * cos_theta) * n.into_inner();
+    let r_out_para = -(1.0 - r_out_perp.norm_squared()).sqrt() * n.into_inner();
     return r_out_perp + r_out_para;
+}
+
+fn reflectance(cos_theta : f32, ratio : f32) -> f32 {
+    let mut r0 = (1.0 - ratio) / (1.0 + ratio);
+    r0 *= r0;
+    r0 + (1. - r0) * (1. - cos_theta).powf(5.0)
 }
 
 impl Material for Dielectric {
     fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
-        // TODO Different for outside and inside face, which we don't track in
-        // HitRecord here.
-        let ratio = 1.0 / self.ir;
-        let refr = refract(ray.direction.into_inner(), hit.normal.into_inner(), ratio);
-        Ray::new_normalize(hit.point, refr, ray.attenuation)
+        let ratio = if hit.front_face { 1.0 / self.ir } else { self.ir };
+        let cos_theta = (-hit.normal.dot(&ray.direction)).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let direction =
+            if ratio * sin_theta > 1.0 ||
+                    reflectance(cos_theta, ratio) > rand_f32(rng) {
+                reflect(ray.direction, hit.normal)
+            } else {
+                refract(ray.direction, hit.normal, cos_theta, ratio)
+            };
+        Ray::new_normalize(hit.point, direction, ray.attenuation)
     }
 }
 

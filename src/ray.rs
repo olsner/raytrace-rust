@@ -31,5 +31,6 @@ pub struct HitRecord {
     pub point : Point3<f32>,
     pub normal : UVec3,
     pub distance : f32,
+    pub front_face : bool,
 }
 
