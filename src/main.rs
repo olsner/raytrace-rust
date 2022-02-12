@@ -18,12 +18,13 @@ use rand_pcg::Pcg32;
 
 mod camera;
 mod framebuf;
+mod material;
 mod ray;
 mod rgb;
 mod scene;
 
 use framebuf::Framebuf;
-use ray::*;
+use material::*;
 use rgb::RGBu8;
 use rgb::RGBf32;
 use scene::*;
