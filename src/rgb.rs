@@ -11,14 +11,14 @@ pub struct RGB<C> {
 }
 
 impl<C : From<u8>> RGB<C> {
-    #[allow(dead_code)]
     pub fn black() -> Self {
         Self{ r : C::from(0u8),
               g : C::from(0u8),
               b : C::from(0u8) }
     }
+}
 
-    #[allow(dead_code)]
+impl<C> RGB<C> {
     pub fn new(r : C, g : C, b : C) -> Self {
         Self{ r, g, b }
     }
