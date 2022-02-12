@@ -42,8 +42,9 @@ fn rand_f32(rng : &mut impl Rng) -> f32 {
 
 fn random_in_unit_sphere(rng : &mut impl Rng) -> Vec3 {
     loop {
-        let p = Vec3::new(rand_f32(rng), rand_f32(rng), rand_f32(rng));
-        if p.norm() <= 1.0 { return p; }
+        let p1 = Vec3::new(rand_f32(rng), rand_f32(rng), rand_f32(rng));
+        let p = 2.0 * p1 - Vec3::repeat(1.0);
+        if p.norm_squared() <= 1.0 { return p; }
     }
 }
 
