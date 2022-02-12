@@ -96,7 +96,7 @@ impl Scene {
     }
 
     pub fn ray_color(&self, ray : &Ray, rng : &mut impl Rng, depth : u32) -> Vec3 {
-        if depth == 0 || very_small(ray.attenuation) {
+        if depth == 0 /*|| very_small(ray.attenuation)*/ {
             return Vec3::repeat(0.0);
         }
 
