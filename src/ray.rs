@@ -2,6 +2,7 @@ use crate::Point3;
 use crate::UVec3;
 use crate::Vec3;
 
+#[derive(Clone, Copy)]
 pub struct Ray {
     pub origin : Point3<f32>,
     pub direction : UVec3,
@@ -12,7 +13,7 @@ impl Ray {
         Ray { origin: origin, direction: UVec3::new_normalize(direction) }
     }
 
-    pub fn at(self : &Self, t : f32) -> Point3<f32> {
+    pub fn at(&self, t : f32) -> Point3<f32> {
         self.origin + (t * self.direction.into_inner())
     }
 }

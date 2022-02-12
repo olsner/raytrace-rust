@@ -54,7 +54,7 @@ impl From<RGBf32> for RGBu8 {
 //}
 
 impl<U, T : AddAssign<U>> AddAssign<RGB<U>> for RGB<T> {
-    fn add_assign(self: &mut Self, other: RGB<U>) {
+    fn add_assign(&mut self, other: RGB<U>) {
         self.r += other.r;
         self.g += other.g;
         self.b += other.b;

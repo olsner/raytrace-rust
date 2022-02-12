@@ -16,11 +16,11 @@ impl Sphere {
 }
 
 pub trait Shape {
-    fn hit(self : &Self, ray : &Ray) -> Option<HitRecord>;
+    fn hit(&self, ray : &Ray) -> Option<HitRecord>;
 }
 
 impl Shape for Sphere {
-    fn hit(self : &Sphere, r : &Ray) -> Option<HitRecord> {
+    fn hit(&self, r : &Ray) -> Option<HitRecord> {
         let oc = r.origin - self.center;
         let a = r.direction.norm_squared();
         let hb = oc.dot(&r.direction);
@@ -62,13 +62,13 @@ impl Scene {
         Scene { spheres : Vec::new() }
     }
 
-    pub fn add(self : &mut Self, sphere : Sphere) {
+    pub fn add(&mut self, sphere : Sphere) {
         self.spheres.push(sphere);
     }
 }
 
 impl Shape for Scene {
-    fn hit(self : &Scene, r : &Ray) -> Option<HitRecord> {
+    fn hit(&self, r : &Ray) -> Option<HitRecord> {
         let mut best_hit = None;
         for sphere in &self.spheres {
             best_hit = best(sphere.hit(r), best_hit);
