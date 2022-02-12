@@ -70,7 +70,13 @@ fn main() {
 
     let mut rng = Pcg32::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7);
 
-    let camera = Camera::new(width, height);
+    //let camera = Camera::new(width, height);
+    let camera = Camera::look_from_at(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        UVec3::new_unchecked(Vec3::new(0.0, 1.0, 0.0)),
+        90.0, // fov, 90 = zoomed out
+        width, height);
 
     let mat_ground = SomeMaterial::lambertian(Vec3::new(0.8, 0.8, 0.0));
     let mat_center = SomeMaterial::lambertian(Vec3::new(0.1, 0.2, 0.5));
