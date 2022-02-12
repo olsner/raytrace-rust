@@ -93,8 +93,8 @@ impl Scene {
         return best_hit;
     }
 
-    pub fn ray_color(&self, ray : &Ray, rng : &mut impl Rng) -> Vec3 {
-        if very_small(ray.attenuation) {
+    pub fn ray_color(&self, ray : &Ray, rng : &mut impl Rng, depth : u32) -> Vec3 {
+        if depth == 0 || very_small(ray.attenuation) {
             return Vec3::repeat(0.0);
         }
 
@@ -102,7 +102,7 @@ impl Scene {
             Some((index, hit)) => {
                 let mat = &self.materials[index];
                 let new_ray = mat.scatter(ray, &hit, rng);
-                self.ray_color(&new_ray, rng)
+                self.ray_color(&new_ray, rng, depth - 1)
             }
             None => sky_color(ray)
         }

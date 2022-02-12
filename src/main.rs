@@ -73,8 +73,10 @@ fn main() {
     let camera = Camera::new(width, height);
 
     let mat_ground = SomeMaterial::lambertian(Vec3::new(0.8, 0.8, 0.0));
-    let mat_center = SomeMaterial::lambertian(Vec3::new(0.7, 0.3, 0.3));
-    let mat_left = SomeMaterial::metal(Vec3::new(0.8, 0.8, 0.8), 0.3);
+//    let mat_center = SomeMaterial::lambertian(Vec3::new(0.7, 0.3, 0.3));
+//    let mat_left = SomeMaterial::metal(Vec3::new(0.8, 0.8, 0.8), 0.3);
+    let mat_center = SomeMaterial::dielectric(1.5);
+    let mat_left = SomeMaterial::dielectric(1.5);
     let mat_right = SomeMaterial::metal(Vec3::new(0.8, 0.6, 0.2), 1.0);
     let mut world = Scene::new();
     world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.), mat_ground);
@@ -84,6 +86,7 @@ fn main() {
 
     let samples = 100;
     let sample_weight = 1. / (samples as f32);
+    let max_depth = 50;
 
     // Render
     for y in 0..height {
@@ -93,7 +96,7 @@ fn main() {
                 let u = (x as f32) + rand_f32(&mut rng);
                 let v = (y as f32) + rand_f32(&mut rng);
                 let r = camera.cast(u, v, sample_weight);
-                sum += RGBf32::from(world.ray_color(&r, &mut rng));
+                sum += RGBf32::from(world.ray_color(&r, &mut rng, max_depth));
             }
             fbuf[(x, y)] = sum.gamma_correct();
         }

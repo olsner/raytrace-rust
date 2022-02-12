@@ -39,9 +39,31 @@ impl Material for Metal {
     }
 }
 
+pub struct Dielectric {
+    ir : f32
+}
+
+fn refract(uv : Vec3, n : Vec3, ratio : f32) -> Vec3 {
+    let cos_theta = (-uv).dot(&n).min(1.0) * ratio;
+    let r_out_perp = ratio * uv + cos_theta * n;
+    let r_out_para = -(1.0 - r_out_perp.norm_squared()).sqrt() * n;
+    return r_out_perp + r_out_para;
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
+        // TODO Different for outside and inside face, which we don't track in
+        // HitRecord here.
+        let ratio = 1.0 / self.ir;
+        let refr = refract(ray.direction.into_inner(), hit.normal.into_inner(), ratio);
+        Ray::new_normalize(hit.point, refr, ray.attenuation)
+    }
+}
+
 pub enum SomeMaterial {
     Lambertian(Lambertian),
     Metal(Metal),
+    Dielectric(Dielectric),
 }
 
 impl SomeMaterial {
@@ -51,6 +73,9 @@ impl SomeMaterial {
     pub fn metal(albedo : Vec3, fuzziness : f32) -> Self {
         Self::Metal(Metal { albedo, fuzziness })
     }
+    pub fn dielectric(ir : f32) -> Self {
+        Self::Dielectric(Dielectric{ ir })
+    }
 }
 
 impl Material for SomeMaterial {
@@ -58,6 +83,7 @@ impl Material for SomeMaterial {
         match self {
             SomeMaterial::Lambertian(mat) => mat.scatter(ray, hit, rng),
             SomeMaterial::Metal(mat) => mat.scatter(ray, hit, rng),
+            SomeMaterial::Dielectric(mat) => mat.scatter(ray, hit, rng),
         }
     }
 }
