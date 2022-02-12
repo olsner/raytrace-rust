@@ -12,6 +12,7 @@ pub struct RGB<C> {
 }
 
 impl<C : From<u8>> RGB<C> {
+    #[allow(dead_code)]
     pub fn black() -> Self {
         Self{ r : C::from(0u8),
               g : C::from(0u8),
