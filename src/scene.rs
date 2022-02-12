@@ -4,6 +4,7 @@ use crate::UVec3;
 use crate::Vec3;
 
 use crate::Rng;
+use crate::rand_f32;
 
 use crate::material::*;
 
@@ -109,4 +110,50 @@ impl Scene {
             None => sky_color(ray)
         }
     }
+}
+
+fn rand_color(rng : &mut impl Rng) -> Vec3 {
+    Vec3::new(rand_f32(rng), rand_f32(rng), rand_f32(rng))
+}
+
+pub fn random_scene(rng : &mut impl Rng) -> Scene {
+    let mut world = Scene::new();
+
+    let mat_ground = SomeMaterial::lambertian(Vec3::new(0.5, 0.5, 0.5));
+    world.add(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0), mat_ground);
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rand_f32(rng);
+            let center = Point3::new(a as f32 + 0.9 * rand_f32(rng),
+                                     0.2,
+                                     b as f32 + 0.9 * rand_f32(rng));
+            let mid = Point3::new(4.0, 0.2, 0.0);
+
+            if (center - mid).norm() > 0.9 {
+                let mat = if choose_mat < 0.8 {
+                    let albedo = rand_color(rng).component_mul(&rand_color(rng));
+                    SomeMaterial::lambertian(albedo)
+                } else if choose_mat < 0.95 {
+                    let albedo = Vec3::repeat(0.5) + 0.5 * rand_color(rng);
+                    let fuzz = rand_f32(rng) * 0.5;
+                    SomeMaterial::metal(albedo, fuzz)
+                } else {
+                    SomeMaterial::dielectric(1.5)
+                };
+
+                world.add(Sphere::new(center, 0.2), mat);
+            }
+        }
+    }
+
+    let material1 = SomeMaterial::dielectric(1.5);
+    let material2 = SomeMaterial::lambertian(Vec3::new(0.4, 0.2, 0.1));
+    let material3 = SomeMaterial::metal(Vec3::new(0.7, 0.6, 0.5), 0.0);
+
+    world.add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0), material1);
+    world.add(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0), material2);
+    world.add(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0), material3);
+
+    return world;
 }

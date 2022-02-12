@@ -73,21 +73,28 @@ fn main() {
 
     //let camera = Camera::new(width, height);
     let camera = Camera::look_from_at(
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
+        Point3::new(13.0, 2.0, 3.0),
+        Point3::new(0.0, 0.0, 0.0),
         UVec3::new_unchecked(Vec3::new(0.0, 1.0, 0.0)),
-        90.0, // fov, 90 = zoomed out
+        40.0, // fov, 90 = zoomed out
         width, height);
 
     let mat_ground = SomeMaterial::lambertian(Vec3::new(0.8, 0.8, 0.0));
     let mat_center = SomeMaterial::lambertian(Vec3::new(0.1, 0.2, 0.5));
     let mat_left = SomeMaterial::dielectric(1.5);
     let mat_right = SomeMaterial::metal(Vec3::new(0.8, 0.6, 0.2), 0.0);
-    let mut world = Scene::new();
-    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.), mat_ground);
-    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5), mat_center);
-    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5), mat_left);
-    world.add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5), mat_right);
+    let world = if false {
+        let mut world = Scene::new();
+        world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.), mat_ground);
+        world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5), mat_center);
+        world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5), mat_left);
+        world.add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5), mat_right);
+        world
+    } else {
+        random_scene(&mut rng)
+    };
+
+    println!("Generated, rendering...");
 
     let samples = 100;
     let sample_weight = 1. / (samples as f32);
@@ -107,6 +114,7 @@ fn main() {
         }
     }
 
+    println!("Writing result...");
     write_ppm(Path::new("frame.ppm"), &fbuf);
 }
 
