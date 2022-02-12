@@ -1,5 +1,6 @@
 use std::ops::AddAssign;
 use std::ops::Mul;
+use nalgebra::ComplexField;
 
 #[derive(Clone)]
 #[derive(Copy)]
@@ -21,6 +22,12 @@ impl<C : From<u8>> RGB<C> {
 impl<C> RGB<C> {
     pub fn new(r : C, g : C, b : C) -> Self {
         Self{ r, g, b }
+    }
+}
+
+impl<C: ComplexField> RGB<C> {
+    pub fn gamma_correct(self) -> Self {
+        Self::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
     }
 }
 

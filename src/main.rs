@@ -113,7 +113,7 @@ fn main() {
                 let r = camera.cast(u, v);
                 sum += ray_color(&world, &r, &mut rng, max_depth);
             }
-            fbuf[(x, y)] = sum * sample_weight;
+            fbuf[(x, y)] = (sum * sample_weight).gamma_correct();
         }
     }
 
