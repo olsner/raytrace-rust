@@ -16,6 +16,9 @@ use rand::Rng;
 extern crate rand_pcg;
 use rand_pcg::Pcg32;
 
+extern crate rayon;
+use rayon::prelude::*;
+
 mod camera;
 mod framebuf;
 mod material;
@@ -100,8 +103,12 @@ fn main() {
     let sample_weight = 1. / (samples as f32);
     let max_depth = 50;
 
+    let mut rows = Vec::<Vec<RGBf32>>::new();
+    rows.resize(height as usize, Vec::<RGBf32>::new());
     // Render
-    for y in 0..height {
+    rows.par_iter_mut().enumerate().for_each(|(y, row)| {
+        let mut rng = Pcg32::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7 + y as u64);
+        row.resize(width as usize, RGBf32::default());
         for x in 0..width {
             let mut sum = RGBf32::default();
             for _ in 0..samples {
@@ -110,7 +117,12 @@ fn main() {
                 let r = camera.cast(u, v, sample_weight);
                 sum += RGBf32::from(world.ray_color(&r, &mut rng, max_depth));
             }
-            fbuf[(x, y)] = sum.gamma_correct();
+            row[x as usize] = sum.gamma_correct();
+        }
+    });
+    for y in 0..height {
+        for x in 0..width {
+            fbuf[(x, y)] = rows[y as usize][x as usize];
         }
     }
 
