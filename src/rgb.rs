@@ -1,3 +1,6 @@
+use std::ops::AddAssign;
+use std::ops::Mul;
+
 #[derive(Clone)]
 #[derive(Copy)]
 #[derive(Default)]
@@ -8,12 +11,14 @@ pub struct RGB<C> {
 }
 
 impl<C : From<u8>> RGB<C> {
+    #[allow(dead_code)]
     pub fn black() -> Self {
         Self{ r : C::from(0u8),
               g : C::from(0u8),
               b : C::from(0u8) }
     }
 
+    #[allow(dead_code)]
     pub fn new(r : C, g : C, b : C) -> Self {
         Self{ r, g, b }
     }
@@ -40,4 +45,32 @@ impl From<RGBf32> for RGBu8 {
 //                b : D::from(s.b) }
 //    }
 //}
+
+impl<U, T : AddAssign<U>> AddAssign<RGB<U>> for RGB<T> {
+    fn add_assign(self: &mut Self, other: RGB<U>) {
+        self.r += other.r;
+        self.g += other.g;
+        self.b += other.b;
+    }
+}
+
+impl<T : Mul + Mul<Output = T>> Mul for RGB<T> {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        Self {
+            r: self.r * other.r,
+            g: self.g * other.g,
+            b: self.b * other.b }
+    }
+}
+
+impl<T : Copy + Mul + Mul<Output = T>> Mul<T> for RGB<T> {
+    type Output = Self;
+    fn mul(self, scale: T) -> Self {
+        Self {
+            r: self.r * scale,
+            g: self.g * scale,
+            b: self.b * scale }
+    }
+}
 
