@@ -31,8 +31,8 @@ impl Camera {
         Camera { origin, lower_left, horizontal, vertical }
     }
 
-    pub fn cast(&self, u : f32, v : f32) -> Ray {
+    pub fn cast(&self, u : f32, v : f32, weight : f32) -> Ray {
         let direction = self.lower_left + u * self.horizontal + v * self.vertical - self.origin;
-        Ray::new_normalize(self.origin, direction)
+        Ray::new_normalize(self.origin, direction, Vec3::repeat(weight))
     }
 }

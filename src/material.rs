@@ -7,16 +7,16 @@ use crate::random_in_unit_sphere;
 use crate::ray::*;
 
 pub trait Material {
-    fn scatter(&self, ray : &Ray, rec : &HitRecord, rng : &mut impl Rng) -> (Ray, Vec3);
+    fn scatter(&self, ray : &Ray, rec : &HitRecord, rng : &mut impl Rng) -> Ray;
 }
 
 pub struct Lambertian(Vec3);
 
 impl Material for Lambertian {
-    fn scatter(&self, _ : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> (Ray, Vec3) {
+    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
         let n = hit.normal.into_inner();
         let bounce_dir = n + random_unit_vector(rng).into_inner();
-        (Ray::new_normalize(hit.point, bounce_dir), self.0)
+        ray.attenuated(hit.point, bounce_dir, self.0)
     }
 }
 
@@ -30,15 +30,12 @@ fn reflect(v : Vec3, n : Vec3) -> Vec3 {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> (Ray, Vec3) {
+    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
         let reflected = reflect(ray.direction.into_inner(), hit.normal.into_inner());
         let fuzzed = reflected + self.fuzziness * random_in_unit_sphere(rng);
-        let new_ray = Ray::new_normalize(hit.point, fuzzed);
-        if new_ray.direction.dot(&hit.normal) > 0. {
-            (new_ray, self.albedo)
-        } else {
-            (new_ray, Vec3::default())
-        }
+        let keep = fuzzed.dot(&hit.normal) > 0.;
+        let attenuation = if keep { self.albedo } else { Vec3::default() };
+        ray.attenuated(hit.point, fuzzed, attenuation)
     }
 }
 
@@ -57,7 +54,7 @@ impl SomeMaterial {
 }
 
 impl Material for SomeMaterial {
-    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> (Ray, Vec3) {
+    fn scatter(&self, ray : &Ray, hit : &HitRecord, rng : &mut impl Rng) -> Ray {
         match self {
             SomeMaterial::Lambertian(mat) => mat.scatter(ray, hit, rng),
             SomeMaterial::Metal(mat) => mat.scatter(ray, hit, rng),

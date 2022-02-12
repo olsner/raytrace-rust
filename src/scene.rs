@@ -58,16 +58,20 @@ fn best(i : usize, left : Option<HitRecord>, right : Option<(usize, HitRecord)>)
     }
 }
 
-fn sky_color(dir : UVec3) -> Vec3 {
+fn sky_color(ray : &Ray) -> Vec3 {
     let white = Vec3::new(1.0, 1.0, 1.0);
     let blue = Vec3::new(0.5, 0.7, 1.0);
-    let t = 0.5 * (dir.y + 1.0);
-    white.lerp(&blue, t)
+    let t = 0.5 * (ray.direction.y + 1.0);
+    white.lerp(&blue, t).component_mul(&ray.attenuation)
 }
 
 pub struct Scene {
     spheres : Vec<Sphere>,
     materials: Vec<SomeMaterial>
+}
+
+fn very_small(vec : Vec3) -> bool {
+    vec.x.abs() < 1e-7 && vec.y.abs() < 1e7 && vec.z.abs() < 1e7
 }
 
 impl Scene {
@@ -89,18 +93,18 @@ impl Scene {
         return best_hit;
     }
 
-    pub fn ray_color(&self, ray : &Ray, rng : &mut impl Rng, depth : i32) -> Vec3 {
-        if depth == 0 {
+    pub fn ray_color(&self, ray : &Ray, rng : &mut impl Rng) -> Vec3 {
+        if very_small(ray.attenuation) {
             return Vec3::repeat(0.0);
         }
 
         match self.hit(ray) {
             Some((index, hit)) => {
                 let mat = &self.materials[index];
-                let (new_ray, attenuation) = mat.scatter(ray, &hit, rng);
-                self.ray_color(&new_ray, rng, depth - 1).component_mul(&attenuation)
+                let new_ray = mat.scatter(ray, &hit, rng);
+                self.ray_color(&new_ray, rng)
             }
-            None => sky_color(ray.direction)
+            None => sky_color(ray)
         }
     }
 }

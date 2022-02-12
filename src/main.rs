@@ -84,19 +84,18 @@ fn main() {
 
     let samples = 100;
     let sample_weight = 1. / (samples as f32);
-    let max_depth = 50;
 
     // Render
-    for y in (0..height).rev() {
+    for y in 0..height {
         for x in 0..width {
             let mut sum = RGBf32::default();
             for _ in 0..samples {
                 let u = (x as f32) + rand_f32(&mut rng);
                 let v = (y as f32) + rand_f32(&mut rng);
-                let r = camera.cast(u, v);
-                sum += RGBf32::from(world.ray_color(&r, &mut rng, max_depth));
+                let r = camera.cast(u, v, sample_weight);
+                sum += RGBf32::from(world.ray_color(&r, &mut rng));
             }
-            fbuf[(x, y)] = (sum * sample_weight).gamma_correct();
+            fbuf[(x, y)] = sum.gamma_correct();
         }
     }
 
